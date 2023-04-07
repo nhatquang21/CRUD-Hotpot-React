@@ -1,18 +1,12 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridColDef,
-  GridRowId,
-  GridRowParams,
-} from '@mui/x-data-grid';
-import { useState, useEffect, useMemo } from 'react';
+import { DataGrid, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
+import { useState, useEffect } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Alert, AlertTitle, Button, Container, Snackbar } from '@mui/material';
+import { Button, Container } from '@mui/material';
 import { deleteItem, fetchItems } from '../utilities/fetchAPI';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, redirect } from 'react-router-dom';
 import HandleMessage from './HandleMessage';
 
 export default function DataGridDemo(props: any) {
@@ -33,7 +27,11 @@ export default function DataGridDemo(props: any) {
   };
 
   useEffect(() => {
-    fetchItems(`${tableName}`, setData, includes);
+    const getItems = async () => {
+      const data = await fetchItems(`${tableName}`, includes);
+      setData(data);
+    };
+    getItems();
   }, []);
 
   columns = [
@@ -79,7 +77,6 @@ export default function DataGridDemo(props: any) {
     <>
       <Container>
         <h1>{tableName.toUpperCase()}</h1>
-
         <HandleMessage
           tableName={`${tableName}`}
           message={message}

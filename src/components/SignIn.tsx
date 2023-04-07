@@ -12,6 +12,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { login } from '../utilities/fetchAPI';
 import { redirect, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import HandleMessage from './HandleMessage';
+import { WRONG_INFO } from '../constants/messages';
 
 function Copyright(props: any) {
   return (
@@ -34,17 +36,16 @@ function Copyright(props: any) {
 const theme = createTheme();
 
 export default function SignIn() {
-  const { register } = useForm();
-
-  const onSubmit = (data: any) => {
-    console.log(data);
-    login(data).then((res: any) => {
-      console.log(res);
-      if (!res.error) {
-        localStorage.setItem('token', res.token);
-        redirect('/');
-      }
-    });
+  const [message, setMessage] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+  const handleClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpen(false);
   };
   const navigate = useNavigate();
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -57,16 +58,23 @@ export default function SignIn() {
     };
 
     login(user).then((res: any) => {
-      console.log(res);
       if (!res.error) {
         localStorage.setItem('token', res.token);
         navigate('/', { replace: true });
+      } else {
+        console.log(res.error);
+        const statusCode = res.error.statusCode;
+        if (statusCode === 401) {
+          setMessage(WRONG_INFO);
+          setOpen(true);
+        }
       }
     });
   };
 
   return (
     <ThemeProvider theme={theme}>
+      <HandleMessage message={message} open={open} handleClose={handleClose} />
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box

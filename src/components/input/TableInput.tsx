@@ -18,10 +18,9 @@ export default function TableInput(props: any) {
 
   useEffect(() => {
     if (field.value) {
+      console.log();
       formState.defaultValues.totalBill = 0;
       field.value.forEach((item: any) => {
-        console.log(formState.defaultValues.totalBill);
-        console.log(item.dishTotalPrice);
         formState.defaultValues.totalBill += item.dishTotalPrice;
       });
       setTotalBill(formState.defaultValues.totalBill);

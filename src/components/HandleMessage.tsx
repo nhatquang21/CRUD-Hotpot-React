@@ -7,11 +7,15 @@ import {
   DELETE_SUCCESSFUL,
   ADD_SUCCESSFUL,
   ADD_FAILED,
+  AUTHENTICATE_REQUIRED,
+  MATCH_PASSWORD,
+  ITEM_EXIST,
+  OLD_PASSWORD_INCORRECT,
+  WRONG_INFO,
 } from '../constants/messages';
 
 export default function HandleMessage(props: any) {
   const { tableName, message, open, handleClose } = props;
-
   const listFunctionMessage = [
     UPDATE_FAILED,
     UPDATE_SUCCESSFUL,
@@ -19,6 +23,11 @@ export default function HandleMessage(props: any) {
     DELETE_SUCCESSFUL,
     ADD_SUCCESSFUL,
     ADD_FAILED,
+    AUTHENTICATE_REQUIRED,
+    ITEM_EXIST,
+    MATCH_PASSWORD,
+    WRONG_INFO,
+    OLD_PASSWORD_INCORRECT,
   ];
 
   let checkMessage = false;
@@ -31,7 +40,7 @@ export default function HandleMessage(props: any) {
 
   return (
     <>
-      {checkMessage && message.includes('fail') && (
+      {checkMessage && message.includes('ERROR') && (
         <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
           <Alert onClose={handleClose} severity="error">
             {message}
@@ -40,12 +49,26 @@ export default function HandleMessage(props: any) {
       )}
       {checkMessage && message.includes('success') && (
         <>
-          <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+          <Snackbar open={open} autoHideDuration={2000} onClose={handleClose}>
             <Alert onClose={handleClose} severity="success">
               {message}
             </Alert>
           </Snackbar>
         </>
+      )}
+      {checkMessage && message.includes('Info') && (
+        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+          <Alert onClose={handleClose} severity="info">
+            {message}
+          </Alert>
+        </Snackbar>
+      )}
+      {checkMessage && message.includes('exist') && (
+        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+          <Alert onClose={handleClose} severity="error">
+            {message}
+          </Alert>
+        </Snackbar>
       )}
     </>
   );

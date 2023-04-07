@@ -102,12 +102,6 @@ const USERS_COLUMNS: GridColDef[] = [
     width: 100,
   },
   {
-    field: 'pwd',
-    type: 'password',
-    headerName: 'Password ',
-    width: 200,
-  },
-  {
     field: 'createdOn',
     type: 'Date',
     headerName: 'Created On',

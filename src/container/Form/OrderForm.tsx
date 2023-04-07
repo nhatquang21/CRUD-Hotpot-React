@@ -61,7 +61,6 @@ const dataEmployees = async () => {
   try {
     const response = await fetch(`http://localhost:3000/employees`);
     const json = await response.json();
-
     return json;
   } catch (e) {
     console.log('====', e);
@@ -73,7 +72,6 @@ const transform = (data: any) => {
   data['employeeId'] = Number(data['employeeId']);
   data['customerId'] = Number(data['customerId']);
   data['createdOn'] = moment(data['createdOn']).toISOString();
-
   data['orderDishes'] = data['orderDishes'].map((row: any) => {
     row['quantity'] = Number(row['dishQuantity']);
     for (let key in row) {
@@ -90,13 +88,13 @@ const transform = (data: any) => {
   });
 
   data['dishList'] = data['orderDishes'];
-  delete data['orderDishes'];
+
   delete data['employee'];
   delete data['customer'];
   delete data['dishes'];
   delete data['totalBill'];
   delete data['createdOn'];
-
+  delete data['orderDishes'];
   return data;
 };
 
@@ -127,9 +125,27 @@ export default function OrderForm() {
   useEffect(() => {
     if (listCustomers && listEmployees && listDishes) {
       const newFields = [...fields];
-      newFields[3].options = listEmployees;
-      newFields[4].options = listCustomers;
-      newFields[5].options = listDishes;
+      let fieldEmp = newFields.map((item: any) => {
+        if (item.field === 'employeeId') {
+          item.options = listEmployees;
+          item.defaultValue = listEmployees[0].id;
+        }
+        return item;
+      });
+      let fieldCus = newFields.map((item: any) => {
+        if (item.field === 'customerId') {
+          item.options = listCustomers;
+          item.defaultValue = listCustomers[0].id;
+        }
+        return item;
+      });
+      let fieldDish = newFields.map((item: any) => {
+        if (item.field === 'orderDishes') {
+          item.options = listDishes;
+        }
+        return item;
+      });
+
       setFields(newFields);
     }
   }, [listCustomers, listEmployees]);

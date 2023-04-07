@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { useLocation, useParams } from 'react-router-dom';
+import { useForm, Controller, useFormState } from 'react-hook-form';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import HandleMessage from './HandleMessage';
 import { Container } from '@mui/system';
 import { fetchItemById, editItem, createItem } from '../utilities/fetchAPI';
@@ -10,16 +10,28 @@ import SubmitButton from './buttons/SubmitButton';
 import FormSelect from './input/FormSelect';
 import DateInput from './input/DateInput';
 import TableInput from './input/TableInput';
+import Button from '@mui/material/Button';
+import { MATCH_PASSWORD, OLD_PASSWORD_INCORRECT } from '../constants/messages';
+import { genSaltSync, hashSync } from 'bcrypt-ts';
 
 export default function Form(props: any) {
-  const { fields, transform, transformDate, tableHeader, dataDishes } = props;
+  const {
+    fields,
+    transform,
+    transformDate,
+    tableHeader,
+    dataDishes,
+    optionalFunc,
+    checkOLDPWD,
+  } = props;
   let { state } = useLocation();
   const { title, method, tableName, includes } = state;
   const id = useParams()['id'];
   const [item, setItem] = useState<any | null>(null);
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
-  const { handleSubmit, register, reset, control } = useForm({
+  const { handleSubmit, reset, control, getValues, setError } = useForm({
+    mode: 'all',
     values: item ? item : {},
   });
 
@@ -48,42 +60,66 @@ export default function Form(props: any) {
   }, []);
 
   useEffect(() => {
-    if (item) {
+    if (item && method === 'PUT') {
       let defaultValues = {};
       defaultValues = item;
       reset({ ...defaultValues });
     }
   }, [item]);
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     if (transform) {
       data = transform(data);
     }
-    console.log('data', data);
-    for (let key in data) {
-      if (key === 'id') {
-        delete data[key];
+    if (checkOLDPWD) {
+      const check = await checkOLDPWD(data);
+
+      if (check) {
+        if (data['newPWD'] === data['confPWD']) {
+          delete data['nowPWD'];
+          delete data['confPWD'];
+          data['pwd'] = data['newPWD'];
+
+          const salt = genSaltSync(10);
+          const hash = hashSync(data['pwd'], salt);
+          item['pwd'] = hash;
+          reset({ ...item });
+          delete data['newPWD'];
+
+          data = JSON.stringify(data);
+          editItem(`${tableName}`, Number(id), setMessage, setOpen, data);
+        } else {
+          setMessage(MATCH_PASSWORD(`${tableName}`));
+          setOpen(true);
+        }
+      } else {
+        setMessage(OLD_PASSWORD_INCORRECT(`${tableName}`));
+        setOpen(true);
+      }
+    } else {
+      for (let key in data) {
+        if (key === 'id') {
+          delete data[key];
+        }
+      }
+
+      if (method === 'PUT') {
+        if (data['pwd']) {
+          delete data['pwd'];
+        }
+        data = JSON.stringify(data);
+        console.log(data);
+        editItem(`${tableName}`, Number(id), setMessage, setOpen, data);
+      } else if (method === 'ChangePWD') {
+      } else {
+        data = JSON.stringify(data);
+        console.log(data);
+        createItem(`${tableName}`, setMessage, setOpen, data);
       }
     }
-    console.log(JSON.stringify(data));
-
-    const requestOptions = (method: string) => {
-      return {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      };
-    };
-    method === 'PUT'
-      ? editItem(
-          `${tableName}`,
-          Number(id),
-          setMessage,
-          setOpen,
-          requestOptions('PATCH')
-        )
-      : createItem(`${tableName}`, setMessage, setOpen, requestOptions('POST'));
   };
+
+  useEffect(() => {}, []);
 
   return (
     <Container>
@@ -107,10 +143,8 @@ export default function Form(props: any) {
         {fields &&
           fields.length > 0 &&
           fields.map((f: any) => {
-            const { field, type, label, options } = f;
-
+            const { field, type, label, options, defaultValue } = f;
             if (!f) return;
-
             return (
               <div
                 style={{
@@ -126,7 +160,13 @@ export default function Form(props: any) {
                     control={control}
                     name={field}
                     render={({ field }) => {
-                      return <FormSelect field={field} options={options} />;
+                      return (
+                        <FormSelect
+                          defaultValue={defaultValue}
+                          field={field}
+                          options={options}
+                        />
+                      );
                     }}
                   />
                 )}
@@ -134,8 +174,19 @@ export default function Form(props: any) {
                   <Controller
                     control={control}
                     name={field}
-                    render={({ field }) => {
-                      return <FormInput field={field} />;
+                    rules={{
+                      validate: {
+                        passwordDoesntMatch: (value) => {
+                          if (field === 'confPWD') {
+                            if (value !== getValues('newPWD')) {
+                              return 'Password does not match';
+                            }
+                          }
+                        },
+                      },
+                    }}
+                    render={({ field, formState }) => {
+                      return <FormInput formState={formState} field={field} />;
                     }}
                   />
                 )}
@@ -171,6 +222,22 @@ export default function Form(props: any) {
 
         <div>
           <SubmitButton />
+          {optionalFunc && id && (
+            <Button variant="contained" size="medium">
+              <Link
+                style={{ textDecoration: 'none', color: 'white' }}
+                to={`changePWD`}
+                state={{
+                  title: 'Change password',
+                  method: 'ChangePWD',
+                  tableName: tableName,
+                }}
+              >
+                {' '}
+                Change password
+              </Link>
+            </Button>
+          )}
         </div>
       </form>
     </Container>

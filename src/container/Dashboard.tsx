@@ -18,8 +18,14 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { mainListItems, secondaryListItems } from '../components/listItem';
+import { useContext } from 'react';
+import Context from '../store/Context';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 import Orders from './Orders';
+import Dishes from './Dishes';
+import { Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 function Copyright(props: any) {
   return (
@@ -92,10 +98,22 @@ const Drawer = styled(MuiDrawer, {
 const mdTheme = createTheme();
 
 function DashboardContent() {
+  const theme = useContext(Context);
+  const navigate = useNavigate();
+  const user = theme[0];
+  const changedToken = theme[2];
   const [open, setOpen] = React.useState(true);
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  let token = localStorage.getItem('token');
+
+  React.useEffect(() => {
+    console.log('render from dashboard');
+    changedToken();
+    console.log(theme[0]);
+  }, [token]);
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -129,8 +147,27 @@ function DashboardContent() {
               Dashboard
             </Typography>
             <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
+              <Badge color="secondary">
+                <>
+                  {user ? (
+                    <>
+                      <div style={{ marginRight: '15px' }}>
+                        Hi {user['username']}{' '}
+                      </div>
+
+                      <LogoutIcon
+                        onClick={() => {
+                          localStorage.removeItem('token');
+                          navigate('/login');
+                        }}
+                      >
+                        Logout
+                      </LogoutIcon>
+                    </>
+                  ) : (
+                    ``
+                  )}
+                </>
               </Badge>
             </IconButton>
           </Toolbar>
@@ -195,7 +232,7 @@ function DashboardContent() {
               {/* Recent Orders */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <Orders />
+                  <Dishes />
                 </Paper>
               </Grid>
             </Grid>

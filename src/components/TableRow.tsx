@@ -9,14 +9,16 @@ export default function TableRowCustom({ data, field, formState }: any) {
   const idDish = data.id;
 
   useEffect(() => {
-    if (field.value) {
+    if (field.value && field.value.length > 0) {
       field.value.find((item: any) => {
         if (item.dishId === idDish) {
           setQuantity(item.dishQuantity);
         }
       });
     }
-  }, []);
+  }, [field.value]);
+
+  console.log();
 
   useEffect(() => {
     setTotalPrice(data.price * quantity);
